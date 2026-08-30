@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Pricing {
+  FREE
+  FREEMIUM
+  PAID
+  OPEN_SOURCE
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  icon        String    @default("Folder")
+  color       String    @default("from-blue-500 to-indigo-600")
+  websites    Website[]
+  createdAt   DateTime  @default(now())
+}
+
+model Website {
+  id              String     @id @default(cuid())
+  slug            String     @unique
+  name            String
+  url             String
+  domain          String
+  description     String
+  longDescription String?    @db.Text
+  category        Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId      String
+  pricing         Pricing    @default(FREE)
+  rating          Float      @default(5.0)
+  upvotes         Int        @default(0)
+  featured        Boolean    @default(false)
+  iconBg          String     @default("#6366f1")
+  iconText        String     @default("WN")
+  bannerGradient  String?
+  keyFeatures     String[]   @default([])
+  tags            Tag[]      @relation("WebsiteTags")
+  upvoteRecords   Upvote[]
+  bookmarkRecords Bookmark[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([categoryId])
+  @@index([pricing])
+}
+
+model Tag {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  websites Website[] @relation("WebsiteTags")
+}
+
+model Upvote {
+  id        String   @id @default(cuid())
+  website   Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  websiteId String
+  userIp    String   @default("anonymous")
+  createdAt DateTime @default(now())
+
+  @@unique([websiteId, userIp])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  website   Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  websiteId String
+  userIp    String   @default("anonymous")
+  createdAt DateTime @default(now())
+
+  @@unique([websiteId, userIp])
+}
